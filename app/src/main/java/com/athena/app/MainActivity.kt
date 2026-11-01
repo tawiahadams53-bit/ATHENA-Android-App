@@ -3,6 +3,11 @@ package com.athena.app
 import android.app.Activity
 import android.os.Bundle
 import android.content.Context
+import android.content.ClipboardManager
+import android.content.ClipData
+import android.content.Intent
+import android.net.Uri
+import android.graphics.drawable.GradientDrawable
 import android.graphics.Color
 import android.view.Gravity
 import android.view.View
@@ -21,9 +26,9 @@ class MainActivity : Activity() {
     private val endpoint =
         "https://athena-programming-lab.tawiahadams53.workers.dev/api/chat"
 
-    private val purple = Color.rgb(124, 77, 255)
-    private val bgColor = Color.rgb(18, 12, 35)
-    private val panel = Color.rgb(35, 25, 59)
+    private val purple = Color.rgb(22, 119, 255)
+    private val bgColor = Color.rgb(8, 11, 18)
+    private val panel = Color.rgb(16, 24, 39)
 
     private lateinit var root: FrameLayout
     private lateinit var messages: LinearLayout
@@ -139,6 +144,7 @@ class MainActivity : Activity() {
         sendButton = makeText("➤", 24f, Color.WHITE, true)
         sendButton.gravity = Gravity.CENTER
         sendButton.setPadding(dp(16), dp(10), dp(12), dp(10))
+        sendButton.setBackgroundColor(Color.rgb(22, 119, 255))
         sendButton.setOnClickListener { sendMessage() }
 
         inputBar.addView(input, LinearLayout.LayoutParams(0, -2, 1f))
@@ -151,25 +157,85 @@ class MainActivity : Activity() {
     }
 
     private fun addMessage(sender: String, message: String) {
+        val isUser = sender == "YOU"
+
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = if (sender == "YOU") Gravity.END else Gravity.START
-            setPadding(0, dp(5), 0, dp(5))
+            gravity = if (isUser) Gravity.END else Gravity.START
+            setPadding(0, dp(7), 0, dp(3))
         }
 
         val bubble = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(14), dp(10), dp(14), dp(10))
-            setBackgroundColor(
-                if (sender == "YOU") Color.rgb(75, 48, 130) else panel
+            setPadding(dp(15), dp(12), dp(15), dp(12))
+
+            background = GradientDrawable().apply {
+                setColor(
+                    if (isUser) Color.rgb(18, 61, 130)
+                    else Color.TRANSPARENT
+                )
+                cornerRadius = dp(21).toFloat()
+            }
+        }
+
+        if (!isUser) {
+            bubble.addView(
+                makeText("ATHENA", 12f, Color.rgb(75, 155, 255), true)
             )
         }
 
-        bubble.addView(makeText(sender, 11f, purple, true))
         bubble.addView(makeText(message, 15f, Color.WHITE))
 
-        row.addView(bubble, LinearLayout.LayoutParams(0, -2, 0.88f))
+        row.addView(
+            bubble,
+            LinearLayout.LayoutParams(
+                0, -2, if (isUser) 0.88f else 0.98f
+            )
+        )
+
         messages.addView(row)
+
+        // Feedback and copy controls for assistant responses.
+        if (!isUser) {
+            val actions = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.START
+                setPadding(dp(5), dp(2), 0, dp(7))
+            }
+
+            val positive = makeText("👍", 17f, Color.LTGRAY)
+            val negative = makeText("👎", 17f, Color.LTGRAY)
+            val copy = makeText("▢", 20f, Color.LTGRAY)
+
+            listOf(positive, negative, copy).forEach {
+                it.setPadding(dp(9), dp(6), dp(9), dp(6))
+                actions.addView(it)
+            }
+
+            positive.setOnClickListener {
+                positive.setTextColor(Color.rgb(60, 190, 120))
+                negative.setTextColor(Color.LTGRAY)
+                Toast.makeText(this, "Thanks for your feedback", Toast.LENGTH_SHORT).show()
+            }
+
+            negative.setOnClickListener {
+                negative.setTextColor(Color.rgb(255, 110, 110))
+                positive.setTextColor(Color.LTGRAY)
+                Toast.makeText(this, "Feedback recorded for this session", Toast.LENGTH_SHORT).show()
+            }
+
+            copy.setOnClickListener {
+                val clipboard =
+                    getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(
+                    ClipData.newPlainText("ATHENA response", message)
+                )
+                Toast.makeText(this, "Response copied", Toast.LENGTH_SHORT).show()
+            }
+
+            messages.addView(actions)
+        }
+
         scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
     }
 
@@ -341,6 +407,11 @@ class MainActivity : Activity() {
             Color.LTGRAY
         ))
 
+        drawerItem(side, "☎   Contact ATHENA") {
+            closeDrawer()
+            showContactOptions()
+        }
+
         drawerItem(side, "⚙   Settings") {
             closeDrawer()
         }
@@ -351,6 +422,45 @@ class MainActivity : Activity() {
         )
 
         root.addView(drawer, FrameLayout.LayoutParams(-1, -1))
+    }
+
+    private fun showContactOptions() {
+        val choices = arrayOf(
+            "WhatsApp",
+            "Email: adamstawiah29@gmail.com",
+            "Email: tawiahadams53@gmail.com"
+        )
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("Contact ATHENA")
+            .setItems(choices) { _, which ->
+                val intent = when (which) {
+                    0 -> Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("https://wa.me/233549830320")
+                    )
+                    1 -> Intent(
+                        Intent.ACTION_SENDTO,
+                        Uri.parse("mailto:adamstawiah29@gmail.com")
+                    )
+                    else -> Intent(
+                        Intent.ACTION_SENDTO,
+                        Uri.parse("mailto:tawiahadams53@gmail.com")
+                    )
+                }
+
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        this,
+                        "No compatible app found",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+            .setNegativeButton("Close", null)
+            .show()
     }
 
     private fun drawerItem(
