@@ -19,6 +19,8 @@ import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
+import io.noties.markwon.Markwon
+import io.noties.markwon.ext.tables.TablePlugin
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -48,6 +50,7 @@ class MainActivity : Activity() {
     private val executor = Executors.newSingleThreadExecutor()
     private val history = mutableListOf<JSONObject>()
     private var waiting = false
+    private lateinit var markwon: Markwon
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,10 +68,14 @@ class MainActivity : Activity() {
             }
         }
 
+        markwon = Markwon.builder(this)
+            .usePlugin(TablePlugin.create(this))
+            .build()
+
         buildInterface()
         addMessage(
             "ATHENA",
-            "Hello. I'm ATHENA, your AI assistant. What would you like to work on?"
+            "Hello. What would you like to work on?"
         )
     }
 
@@ -110,17 +117,17 @@ class MainActivity : Activity() {
         menu.setPadding(dp(8), dp(8), dp(18), dp(8))
         menu.setOnClickListener { openDrawer() }
 
-        val title = makeText("ATHENA", 20f, Color.WHITE, true)
-        title.gravity = Gravity.CENTER_VERTICAL
 
         val newChat = makeText("+", 28f, Color.WHITE, true)
         newChat.gravity = Gravity.CENTER
         newChat.setOnClickListener { newConversation() }
 
         toolbar.addView(menu)
-        toolbar.addView(title, LinearLayout.LayoutParams(0, dp(44), 1f))
+        toolbar.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
         toolbar.addView(newChat, LinearLayout.LayoutParams(dp(44), dp(44)))
         main.addView(toolbar)
+
+        val conversation = FrameLayout(this)
 
         scroll = ScrollView(this).apply {
             isFillViewport = true
@@ -133,7 +140,34 @@ class MainActivity : Activity() {
         }
 
         scroll.addView(messages)
-        main.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
+
+        conversation.addView(
+            scroll,
+            FrameLayout.LayoutParams(-1, -1)
+        )
+
+        val topFade = View(this).apply {
+            isClickable = false
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            background = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(
+                    Color.rgb(16, 16, 16),
+                    Color.rgb(16, 16, 16),
+                    Color.TRANSPARENT
+                )
+            )
+        }
+
+        conversation.addView(
+            topFade,
+            FrameLayout.LayoutParams(-1, dp(36), Gravity.TOP)
+        )
+
+        main.addView(
+            conversation,
+            LinearLayout.LayoutParams(-1, 0, 1f)
+        )
         root.addView(main, FrameLayout.LayoutParams(-1, -1))
 
         val composer = LinearLayout(this).apply {
@@ -148,7 +182,7 @@ class MainActivity : Activity() {
         }
 
         input = EditText(this).apply {
-            hint = "Message ATHENA"
+            hint = "Message"
             setHintTextColor(Color.LTGRAY)
             setTextColor(Color.WHITE)
             textSize = 16f
@@ -233,14 +267,15 @@ class MainActivity : Activity() {
             }
         }
 
-        if (!isUser) {
-            content.addView(
-                makeText("ATHENA", 12f, Color.rgb(75, 155, 255), true)
-            )
+        val messageText = makeText("", 15.5f, Color.WHITE)
+        messageText.setTextIsSelectable(true)
+
+        if (isUser) {
+            messageText.text = message
+        } else {
+            markwon.setMarkdown(messageText, message)
         }
 
-        val messageText = makeText(message, 15.5f, Color.WHITE)
-        messageText.setTextIsSelectable(true)
         content.addView(messageText)
 
         row.addView(

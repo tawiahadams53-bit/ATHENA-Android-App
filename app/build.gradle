@@ -3,6 +3,11 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+dependencies {
+    implementation 'io.noties:markwon:4.6.2'
+    implementation 'io.noties:markwon-ext-tables:4.6.2'
+}
+
 android {
     namespace 'com.athena.app'
     compileSdk 35
