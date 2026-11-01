@@ -22,7 +22,7 @@ class MainActivity : Activity() {
         "https://athena-programming-lab.tawiahadams53.workers.dev/api/chat"
 
     private val purple = Color.rgb(124, 77, 255)
-    private val background = Color.rgb(18, 12, 35)
+    private val bgColor = Color.rgb(18, 12, 35)
     private val panel = Color.rgb(35, 25, 59)
 
     private lateinit var root: FrameLayout
@@ -39,8 +39,8 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        window.statusBarColor = background
-        window.navigationBarColor = background
+        window.statusBarColor = bgColor
+        window.navigationBarColor = bgColor
         window.setSoftInputMode(
             WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN or
             WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
@@ -72,7 +72,7 @@ class MainActivity : Activity() {
 
     private fun buildInterface() {
         root = FrameLayout(this).apply {
-            setBackgroundColor(background)
+            setBackgroundColor(bgColor)
         }
 
         val main = LinearLayout(this).apply {
