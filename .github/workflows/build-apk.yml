@@ -24,10 +24,19 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Install Android SDK
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: false
 
-      - name: Install Android build tools
+      - name: Accept SDK licenses
+        shell: bash
+        run: |
+          set +o pipefail
+          yes | sdkmanager --licenses
+          set -o pipefail
+
+      - name: Install Android packages
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Build APK
