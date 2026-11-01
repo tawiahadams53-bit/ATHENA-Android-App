@@ -27,14 +27,11 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          accept-android-sdk-licenses: false
+          accept-android-sdk-licenses: true
+          packages: platform-tools
 
-      - name: Accept SDK licenses
-        shell: bash
-        run: |
-          set +o pipefail
-          yes | sdkmanager --licenses
-          set -o pipefail
+      - name: Accept remaining SDK licenses
+        run: yes | sdkmanager --licenses
 
       - name: Install Android packages
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
